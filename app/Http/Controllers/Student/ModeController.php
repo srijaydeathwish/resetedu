@@ -16,7 +16,7 @@ class ModeController extends Controller
             'regular'   => ['slug' => 'regular', 'name' => 'Regular'],
         ];
 
-        return Inertia::render('Modes/ChooseMode', compact('modes'));
+        return Inertia::render('Student/Modes/ChooseMode', compact('modes'));
     }
 
     public function showMode($mode)
@@ -70,6 +70,6 @@ class ModeController extends Controller
         }
 
         // Logic for all modes
-        return Inertia::render('Modes/Universities', compact('universities'));
+        return Inertia::render('Student/Modes/Universities', compact('universities'));
     }
 }

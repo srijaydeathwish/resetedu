@@ -3,44 +3,55 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student\Registration;
+use App\Models\Course;
+use App\Models\Registration;
+use App\Models\CourseSession;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Redirect;
 
 class RegistrationController extends Controller
 {
+    public $candidateEmail;
+    public $university;
+    public $mode;
+
+    public function __construct(Request $request)
+    {
+        $this->university     = $request->university;
+        $this->mode           = $request->mode;
+    }
+
     public function showForm(Request $request)
     {
-        // // Clear all session data
-        // session()->forget('formMode');
-
-        // // Set new session
-        // session()->put('formMode', [
-        //     'mode' => $request->mode,
-        //     'university' => $request->university,
-        // ]);
-
-        //return Inertia::render('Modes/Registration/Form');
-        return Inertia::render('Modes/Registration/Form', [
-            'currentComponent' => 'showPart1', // Set the initial component to be rendered
-            'candidateId' => null, // Replace with the actual candidate ID
+        $courses = Course::all()->makeHidden(['created_at', 'updated_at']);
+        $sessions = CourseSession::all()->makeHidden(['created_at', 'updated_at']);
+        return Inertia::render('Student/Modes/Registration/Form', [
+            'courses' => $courses,
+            'sessions' => $sessions,
+            'mode'              => $this->mode,
+            'university'        => $this->university,
+            'formPart'  => $request->query('formPart') ?? 'part1',
         ]);
     }
 
-
-
     public function submitPart1(Request $request)
     {
-        // $formProgress = session('formProgress');
 
         // Validate the request data
         $validatedData = $request->validate([
+            'contactNumber' => 'required',
+            'country' => 'required',
+            'nationality' => 'required',
+            'state' => 'required',
+            'district' => 'required',
+            'address' => 'required',
+            'pinCode' => 'required|numeric',
             'candidateName' => 'required|string',
             'fatherName' => 'required|string',
             'motherName' => 'required|string',
             'universityName' => 'required|string',
             'dateOfBirth' => 'required|date',
-            'photo' => 'required|image',
             'gender' => 'required|in:male,female,others',
             'category' => 'required|string',
             'aadhaarNumber' => 'required|string',
@@ -51,13 +62,22 @@ class RegistrationController extends Controller
         ]);
 
         // Create a new candidate using the create method
-        $candidate = Registration::create([
+        $candidate = Registration::updateOrCreate([
+            'email_address' => auth()->user()->email
+        ], [
+            'email_address' => auth()->user()->email,
+            'contact_number' => $validatedData['contactNumber'],
+            'country' => $validatedData['country'],
+            'nationality' => $validatedData['nationality'],
+            'state' => $validatedData['state'],
+            'district' => $validatedData['district'],
+            'address' => $validatedData['address'],
+            'pin_code' => $validatedData['pinCode'],
             'name_of_candidate' => $validatedData['candidateName'],
             'father_name' => $validatedData['fatherName'],
             'mother_name' => $validatedData['motherName'],
             'university_name' => $validatedData['universityName'],
             'date_of_birth' => $validatedData['dateOfBirth'],
-            'photo' => $validatedData['photo'],
             'gender' => $validatedData['gender'],
             'category' => $validatedData['category'],
             'adhaar_number' => $validatedData['aadhaarNumber'],
@@ -67,16 +87,10 @@ class RegistrationController extends Controller
             'designation' => $validatedData['designation'],
         ]);
 
-        // Optionally, you can also store the uploaded photo
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('photos');
-            $candidate->photo = $photoPath;
-            $candidate->save();
-        }
-
-        return Inertia::render('Modes/Registration/Form', [
-            'currentComponent' => 'showPart2',
-            'candidateId' => $candidate->id,
+        return redirect()->route('student.registration.showForm', [
+            'mode'              => $this->mode,
+            'university'        => $this->university,
+            'formPart'  => 'part2',
         ]);
     }
 
@@ -84,43 +98,6 @@ class RegistrationController extends Controller
     {
         // Validate the request data
         $validatedData = $request->validate([
-            'candidateId' => 'required',
-            'contactNumber' => 'required',
-            'emailAddress' => 'required|email',
-            'country' => 'required',
-            'nationality' => 'required',
-            'state' => 'required',
-            'district' => 'required',
-            'address' => 'required',
-            'pinCode' => 'required|numeric',
-        ]);
-
-        $candidateID = $validatedData['candidateId'];
-        $candidate = Registration::find($candidateID);
-
-        // Create a new candidate using the create method
-        $candidate->update([
-            'contact_number' => $validatedData['contactNumber'],
-            'email_address' => $validatedData['emailAddress'],
-            'country' => $validatedData['country'],
-            'nationality' => $validatedData['nationality'],
-            'state' => $validatedData['state'],
-            'district' => $validatedData['district'],
-            'address' => $validatedData['address'],
-            'pin_code' => $validatedData['pinCode']
-        ]);
-
-        return Inertia::render('Modes/Registration/Form', [
-            'currentComponent' => 'showPart3',
-            'candidateId' => $candidate->id,
-        ]);
-    }
-
-    public function submitPart3(Request $request)
-    {
-        // Validate the request data
-        $validatedData = $request->validate([
-            'candidateId' => 'required',
             'secYearOfPassing' => 'nullable|numeric',
             'secBoardUniversity' => 'nullable|string',
             'secPercentageCgpa' => 'nullable|numeric',
@@ -142,9 +119,6 @@ class RegistrationController extends Controller
             'othPercentageCgpa' => 'nullable|numeric',
             'othSubjects' => 'nullable|string',
         ]);
-
-        $candidateID = $validatedData['candidateId'];
-        $candidate = Registration::find($candidateID);
 
         $secondary = [
             'year' => $validatedData['secYearOfPassing'],
@@ -189,34 +163,33 @@ class RegistrationController extends Controller
             'others' => $others,
         ]);
 
-        // Create a new candidate using the create method
+        $candidate = Registration::where('email_address', auth()->user()->email)->first();
+
         $candidate->update(
             [
                 'previous_qualification_details' => $educationDetails
             ]
         );
 
-        return Inertia::render('Modes/Registration/Form', [
-            'currentComponent' => 'showPart4',
-            'candidateId' => $candidate->id,
+        return redirect()->route('student.registration.showForm', [
+            'mode'              => $this->mode,
+            'university'        => $this->university,
+            'formPart'  => 'part3',
         ]);
     }
 
-    public function submitPart4(Request $request)
+    public function submitPart3(Request $request)
     {
         // Validate the request data
         $validatedData = $request->validate([
-            'candidateId' => 'required',
             'course' => 'nullable|string',
             'year' => 'nullable|string',
             'session' => 'nullable|string',
             'modeOfStudy' => 'nullable|string',
         ]);
 
-        $candidateID = $validatedData['candidateId'];
-        $candidate = Registration::find($candidateID);
+        $candidate = Registration::where('email_address', auth()->user()->email)->first();
 
-        // Create a new candidate using the create method
         $candidate->update(
             [
                 'course' => $validatedData['course'],
@@ -226,56 +199,147 @@ class RegistrationController extends Controller
             ]
         );
 
-        return Inertia::render('Modes/Registration/Form', [
-            'currentComponent' => 'showPart5',
-            'candidateId' => $candidate->id,
+        return redirect()->route('student.registration.showForm', [
+            'mode'              => $this->mode,
+            'university'        => $this->university,
+            'formPart'  => 'part4',
         ]);
     }
 
-    public function submitPart5(Request $request)
+    public function submitPart4(Request $request)
     {
         // Validate the request data
         $validatedData = $request->validate([
-            'candidateId' => 'required',
             'modeOfPayment' => 'nullable|string',
             'bankAccount' => 'nullable|string',
             'depositDate' => 'nullable|string',
         ]);
 
-        $candidateID = $validatedData['candidateId'];
-        $candidate = Registration::find($candidateID);
-
-        // Create a new candidate using the create method
+        $candidate = Registration::where('email_address', auth()->user()->email)->first();
         $candidate->update([
             'mode_of_payment' => $validatedData['modeOfPayment'],
             'bank_account' => $validatedData['bankAccount'],
             'deposit_date' => $validatedData['depositDate'],
         ]);
 
-        return Inertia::render('Modes/Registration/Form', [
-            'currentComponent' => 'showPart6',
-            'candidateId' => $candidate->id,
+        return redirect()->route('student.registration.showForm', [
+            'mode'              => $this->mode,
+            'university'        => $this->university,
+            'formPart'  => 'part5',
         ]);
+    }
+
+    public function uploadPassportPhoto(Request $request)
+    {
+        $request->validate([
+            'pphoto' => 'required|mimes:jpg,png,webp',
+        ]);
+
+        // Retrieve the uploaded files
+        $file1 = $request->file('pphoto');
+
+        // Generate unique filenames for storing the files
+        $filename1 = time() . '_' . $file1->getClientOriginalName();
+
+        // Move the uploaded files to the desired storage location
+        $file1->storeAs('uploads/'. auth()->user()->email, $filename1);
+
+        // Create records in the database for the uploaded files
+        $file1Path = $filename1;
+
+        $candidate = Registration::where('email_address', auth()->user()->email)->first();
+
+        $candidate->update([
+            'photo' => $file1Path,
+        ]);
+        // Return a response indicating successful upload
+        return response()->json(['message' => 'Files uploaded successfully.']);
+    }
+
+    public function uploadSignature(Request $request)
+    {
+        $request->validate([
+            'sphoto' => 'required|mimes:jpg,png,webp',
+        ]);
+
+        // Retrieve the uploaded files
+        $file1 = $request->file('sphoto');
+
+        // Generate unique filenames for storing the files
+        $filename1 = time() . '_' . $file1->getClientOriginalName();
+
+        // Move the uploaded files to the desired storage location
+        $file1->storeAs('uploads/'. auth()->user()->email, $filename1);
+
+        // Create records in the database for the uploaded files
+        $file1Path = $filename1;
+
+        $candidate = Registration::where('email_address', auth()->user()->email)->first();
+
+        $candidate->update([
+            'signature' => $file1Path,
+        ]);
+        // Return a response indicating successful upload
+        return response()->json(['message' => 'Files uploaded successfully.']);
+    }
+
+    public function submitPart5(Request $request)
+    {
+        // Validate the uploaded files
+        $request->validate([
+            'pphoto' => 'required|mimes:jpg,png,webp|max:2048',
+            'sphoto' => 'required|mimes:jpg,png,webp|max:2048',
+        ]);
+
+        // Retrieve the uploaded files
+        $file1 = $request->file('pphoto');
+        $file2 = $request->file('sphoto');
+
+        // Generate unique filenames for storing the files
+        $filename1 = time() . '_' . $file1->getClientOriginalName();
+        $filename2 = time() . '_' . $file2->getClientOriginalName();
+
+        // Move the uploaded files to the desired storage location
+        $file1->storeAs('uploads/', $filename1);
+        $file2->storeAs('uploads/', $filename2);
+
+        // Create records in the database for the uploaded files
+        $file1Path = $filename1;
+        $file2Path = $filename2;
+
+        $candidate = Registration::where('email_address', auth()->user()->email)->first();
+
+        $candidate->update([
+            'photo' => $file1Path,
+        ]);
+
+        $candidate->update([
+            'signature' => $file2Path,
+        ]);
+
+        // Return a response indicating successful upload
+        return response()->json(['message' => 'Files uploaded successfully.']);
+
+        // return redirect()->route('student.registration.showForm', [
+        //     'mode'              => $this->mode,
+        //     'university'        => $this->university,
+        //     'formPart'  => 'part6',
+        // ]);
     }
 
     public function submitPart6(Request $request)
     {
         // Validate the request data
         $validatedData = $request->validate([
-            'candidateId' => 'required',
             'declaration'  => 'required|boolean',
         ]);
 
-        $candidateID = $validatedData['candidateId'];
-        $candidate = Registration::find($candidateID);
+        $candidate = Registration::where('email_address', auth()->user()->email)->first();
 
-        // Create a new candidate using the create method
         $candidate->update([
             'declaration_by_applicant' => $validatedData['declaration']
         ]);
 
-        return Inertia::render('Modes/Registration/Success', [
-            'candidateId' => $candidate->id,
-        ]);
+        return Inertia::render('Student/Modes/Registration/Success');
     }
 }

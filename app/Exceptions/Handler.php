@@ -2,6 +2,8 @@
 
 namespace App\Exceptions;
 
+use Arr;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
@@ -27,4 +29,30 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+        /**
+     * Convert an authentication exception into a response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Auth\AuthenticationException  $exception
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    // protected function unauthenticated($request, AuthenticationException $exception)
+    // {
+    //     $guard = Arr::first($exception->guards());
+    //     return $this->shouldReturnJson($request, $exception)
+    //         ? response()->json(['message' => $exception->getMessage()], 401)
+    //         : redirect()->guest($guard === 'admin' ? route('admin.login') : route('login'));
+    // }
+
+    protected function unauthenticated($request, AuthenticationException $exception)
+{
+    $guards = $exception->guards();
+
+    return $this->shouldReturnJson($request, $exception)
+        ? response()->json(['message' => $exception->getMessage()], 401)
+        : redirect()->guest($guards[0] === 'admin' ? route('admin.login')
+        : ($guards[0] === 'student' ? route('student.login')
+        : route('login')));
+}
 }
