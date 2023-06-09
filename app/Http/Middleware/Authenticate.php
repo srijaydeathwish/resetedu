@@ -19,5 +19,7 @@ class Authenticate extends Middleware
                 return route('student.login'); // Replace 'student.login' with the actual route for student login
             }
         }
+
+        return null;
     }
 }

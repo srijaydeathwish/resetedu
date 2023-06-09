@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class NewPasswordController extends Controller
 {
@@ -18,9 +20,12 @@ class NewPasswordController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View
      */
-    public function create(Request $request)
+    public function create(Request $request): Response
     {
-        return view('admin.auth.reset-password', ['request' => $request]);
+        return Inertia::render('Auth/StudentAuth/ResetPassword', [
+            'email' => $request->email,
+            'token' => $request->route('token'),
+        ]);
     }
 
     /**

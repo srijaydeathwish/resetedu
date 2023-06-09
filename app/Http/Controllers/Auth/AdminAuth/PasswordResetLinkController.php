@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth\AdminAuth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PasswordResetLinkController extends Controller
 {
@@ -13,9 +15,11 @@ class PasswordResetLinkController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function create()
+    public function create(): Response
     {
-        return view('admin.auth.forgot-password');
+        return Inertia::render('Auth/AdminAuth/ForgotPassword', [
+            'status' => session('status'),
+        ]);
     }
 
     /**
