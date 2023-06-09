@@ -19,9 +19,6 @@
                                        Get Started
                                     </div>
                                     <div class="font-light max-w-lg mt-5 text-sm">
-                                        All devices come with free delivery or pickup as standard. See information on
-                                        available shopping
-                                        options for your location.
                                     </div>
                                 </div>
 
