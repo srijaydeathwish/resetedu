@@ -373,30 +373,30 @@ const props = defineProps(['defaultData'])
 const form = useForm({
     candidateId: props.candidateId,
 
-    secYearOfPassing: '2010',
-    secBoardUniversity: 'A',
-    secPercentageCgpa: '50',
-    secSubjects: 'eng',
+    secYearOfPassing: '',
+    secBoardUniversity: '',
+    secPercentageCgpa: '',
+    secSubjects: '',
 
-    srSecYearOfPassing: '2011',
-    srSecBoardUniversity: 'B',
-    srSecPercentageCgpa: '60',
-    srSecSubjects: 'sci',
+    srSecYearOfPassing: '',
+    srSecBoardUniversity: '',
+    srSecPercentageCgpa: '',
+    srSecSubjects: '',
 
-    gradYearOfPassing: '2012',
-    gradBoardUniversity: 'C',
-    gradPercentageCgpa: '70',
-    gradSubjects: 'his',
+    gradYearOfPassing: '',
+    gradBoardUniversity: '',
+    gradPercentageCgpa: '',
+    gradSubjects: '',
 
-    psGradYearOfPassing: '2013',
-    psGradBoardUniversity: 'D',
-    psGradPercentageCgpa: '80',
-    psGradSubjects: 'geog',
+    psGradYearOfPassing: '',
+    psGradBoardUniversity: '',
+    psGradPercentageCgpa: '',
+    psGradSubjects: '',
 
-    othYearOfPassing: '2014',
-    othBoardUniversity: 'E',
-    othPercentageCgpa: '90',
-    othSubjects: 'maths',
+    othYearOfPassing: '',
+    othBoardUniversity: '',
+    othPercentageCgpa: '',
+    othSubjects: '',
 });
 
 const handleSubmit = () => {

@@ -91,7 +91,7 @@ const props = defineProps(['defaultData'])
 
 const form = useForm({
     course: '',
-    year: '2015',
+    year: '',
     session: '',
     modeOfStudy: props.defaultData.mode
 });

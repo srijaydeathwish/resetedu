@@ -74,8 +74,8 @@ import { markRaw } from "vue";
 const props = defineProps(['defaultData'])
 
 const form = useForm({
-    modeOfPayment: 'cash',
-    bankAccount: 'sbi',
+    modeOfPayment: '',
+    bankAccount: '',
     depositDate: '',
 });
 
